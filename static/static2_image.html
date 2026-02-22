@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Static Visualization - Image Example Prompt</title>
+    
+    <!-- Reveal.js CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/theme/black.css">
+    
+    <!-- Highlight.js for code syntax -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.8.0/styles/atom-one-dark.min.css">
+    
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="../src/style.css">
+</head>
+<body>
+    <!-- Loading Animation -->
+    <div class="page-loader" id="pageLoader">
+        <div class="loader-spinner"></div>
+        <div class="loader-text">Loading</div>
+        <div class="loader-dots">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </div>
+
+    <div class="reveal">
+        <div class="slides">
+<section data-background-gradient="linear-gradient(135deg, #0f3460 0%, #1a1a2e 100%)">
+<!-- Page Title -->
+                <div class="page-title">
+                    <h1>📊 Static Visualization</h1>
+                    <div class="subtitle">Generate Code with <span class="highlight-keyword">Image-Based Style Reference</span></div>
+                </div>
+                
+                <div class="static-layout">
+                    <!-- Left: Prompt Section -->
+                    <div class="prompt-section">
+                        <button class="prompt-copy-btn" onclick="copyPrompt()">📋 Copy Prompt</button>
+                        <div class="section-header">
+                            <span class="section-icon">💬</span>
+                            <h3>Prompt</h3>
+                        </div>
+                        <div class="prompt-content" id="prompt-text">
+                            <p>I want to draw a <span class="replaceable" title="Can be replaced with: barplot, scatterplot, heatmap, etc.">line plot</span>; please generate directly executable Python code for data visualization.</p>
+                            <p class="highlight-text">I have provided an <strong>example image</strong>; please FIRST analyze the detailed style of this example image (including color, format, legend, background, grid lines, and other visual elements), and THEN generate the code based on your analysis to replicate this exact style using the following data:</p>
+                            <div class="example-image-container">
+                                <img src="../src/images/example.png" alt="Example Style Reference" onclick="downloadImage(this, 'example.png')" title="Click to download">
+                                <p class="example-image-hint">Click image to download as example.png</p>
+                            </div>
+                            <pre class="data-block"><code>hku_rank_data = {
+    "Year": [2021, 2022, 2023, 2024, 2025],
+    "QS"  : [22,   22,   21,   26,  17],
+    "THE" : [39,   30,   31,   35,  35],
+}</code></pre>
+                        </div>
+                        <div class="prompt-tag">Example 2: Image-Based Prompt</div>
+                    </div>
+                    
+                    <!-- Right: Output Section -->
+                    <div class="output-section">
+                        <!-- Code Block (Collapsible) -->
+                        <div class="code-block">
+                            <div class="code-header" onclick="toggleCode(this)">
+                                <span class="section-icon">📄</span>
+                                <h4>Generated Code</h4>
+                                <span class="toggle-icon">▼</span>
+                                <button class="copy-btn" onclick="copyCode(event, 'code2')">📋 Copy</button>
+                            </div>
+                            <div class="code-content collapsed" id="code2">
+                                <pre><code class="language-python">import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Your data
+hku_rank_data = {
+    "Year": [2021, 2022, 2023, 2024, 2025],
+    "QS": [22, 22, 21, 26, 17],
+    "THE": [39, 30, 31, 35, 35],
+}
+
+# Convert to DataFrame
+df = pd.DataFrame(hku_rank_data)
+
+# Plotting QS
+plt.figure(figsize=(8, 6))
+ax = sns.lineplot(
+    x='Year', y='QS',
+    color='g',
+    marker='o',
+    markersize=6,
+    data=df,
+    label='QS'
+)
+
+# Plotting THE
+sns.lineplot(
+    x='Year', y='THE',
+    color='b',
+    marker='o',
+    markersize=6,
+    data=df,
+    label='THE'
+)
+
+# Invert Y-axis for both lines
+ax.invert_yaxis()
+
+# Set X and Y ticks
+ax.set(
+    xticks=df['Year'],
+    yticks=[1, 15, 30, 45]
+)
+
+# Legend in upper right
+ax.legend(loc='upper right')
+
+# Fill under QS line
+plt.fill_between(
+    x=df['Year'],
+    y1=df['QS'],
+    y2=[45] * len(df['QS']),
+    alpha=0.1,
+    facecolor='g'
+)
+
+# Fill under THE line
+plt.fill_between(
+    x=df['Year'],
+    y1=df['THE'],
+    y2=[45] * len(df['THE']),
+    alpha=0.1,
+    facecolor='b'
+)
+
+# Remove top and right spines
+sns.despine()
+
+# Add annotations for QS
+for year, rank in zip(df['Year'], df['QS']):
+    plt.text(
+        year, rank - 1.5, str(rank), fontsize=10, c='g',
+        bbox=dict(
+            boxstyle="round",
+            ec='g',
+            fc='g',
+            alpha=0.05
+        )
+    )
+
+# Add annotations for THE
+for year, rank in zip(df['Year'], df['THE']):
+    plt.text(
+        year, rank - 1.5, str(rank), fontsize=10, c='b',
+        bbox=dict(
+            boxstyle="round",
+            ec='b',
+            fc='b',
+            alpha=0.05
+        )
+    )
+
+# Set axis limits
+ax.set_ylim(bottom=45, top=5)
+ax.set_xlim(left=df['Year'].iloc[0] - 0.1, right=df['Year'].iloc[-1] + 0.1)
+
+# Customize spines and tick parameters
+ax.spines["bottom"].set_linewidth(0.5)
+ax.spines["left"].set_linewidth(0.5)
+ax.tick_params(width=0)
+
+# Show plot
+plt.savefig('image_example_prompt.png')</code></pre>
+                            </div>
+                        </div>
+                        
+                        <!-- Image Block -->
+                        <div class="image-block">
+                            <div class="image-header">
+                                <span class="section-icon">🖼️</span>
+                                <h4>Generated Visualization</h4>
+                            </div>
+                            <div class="image-content">
+                                <img src="../src/images/image_example_prompt.png" alt="Image Example Prompt Visualization">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Navigation -->
+                <div class="nav-buttons">
+                    <button class="nav-btn prev-btn" onclick="navigateTo('static1_base.html')">← Prev</button>
+                    <span class="page-indicator">2 / 3</span>
+                    <button class="nav-btn next-btn" onclick="navigateTo('static3_code.html')">Next →</button>
+                </div>
+            </section>
+        </div>
+    </div>
+    
+    <!-- Reveal.js -->
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.js"></script>
+    <!-- Highlight.js -->
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.8.0/lib/highlight.min.js"></script>
+    
+    <script>
+        // Hide loader when page is fully loaded
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                document.getElementById('pageLoader').classList.add('hidden');
+            }, 500);
+        });
+
+        // Show loader on navigation
+        function navigateTo(url) {
+            document.getElementById('pageLoader').classList.remove('hidden');
+            setTimeout(function() {
+                window.location.href = url;
+            }, 300);
+        }
+
+        // Initialize Reveal.js
+        Reveal.initialize({
+            hash: false,
+            history: false,
+            center: false,
+            width: '100%',
+            height: '100%',
+            margin: 0,
+            controls: false,
+            progress: false,
+            keyboard: true
+        });
+        
+        // Initialize syntax highlighting
+        hljs.highlightAll();
+        
+        // Toggle code visibility
+        function toggleCode(header) {
+            const content = header.nextElementSibling;
+            const icon = header.querySelector('.toggle-icon');
+            content.classList.toggle('collapsed');
+            icon.textContent = content.classList.contains('collapsed') ? '▼' : '▲';
+        }
+        
+        // Copy code to clipboard
+        function copyCode(event, codeId) {
+            event.stopPropagation();
+            const codeElement = document.querySelector('#' + codeId + ' code');
+            const text = codeElement.textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = event.target;
+                btn.textContent = '✓ Copied!';
+                setTimeout(() => {
+                    btn.textContent = '📋 Copy';
+                }, 2000);
+            });
+        }
+        
+        // Copy prompt to clipboard
+        function copyPrompt() {
+            const promptElement = document.getElementById('prompt-text');
+            // Get text content, preserving line breaks
+            const text = promptElement.innerText.replace(/🔄/g, '').replace(/💡.*$/gm, '').trim();
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.querySelector('.prompt-copy-btn');
+                btn.textContent = '✓ Copied!';
+                setTimeout(() => {
+                    btn.textContent = '📋 Copy Prompt';
+                }, 2000);
+            });
+        }
+        
+        // Download image function with confirmation dialog
+        function downloadImage(imgElement, filename) {
+            if (confirm('Do you want to download this image as "' + filename + '"?')) {
+                const link = document.createElement('a');
+                link.href = imgElement.src;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+    </script>
+</body>
+</html>

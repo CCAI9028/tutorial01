@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-Powered Data Visualization Tutorial</title>
+    
+    <!-- Reveal.js CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/theme/black.css">
+    
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="src/style.css">
+</head>
+<body>
+    <!-- Loading Animation -->
+    <div class="page-loader" id="pageLoader">
+        <div class="loader-spinner"></div>
+        <div class="loader-text">Loading</div>
+        <div class="loader-dots">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </div>
+
+    <div class="reveal">
+        <div class="slides">
+            <!-- Slide 1: Welcome & Choose Your Path -->
+            <section id="welcome" data-background-gradient="linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)">
+                <div class="slide-content">
+                    <h1 class="main-title">
+                        Demo for Tutorial 01: <span class="highlight">Using AI for Data Visualization</span>
+                    </h1>
+                    <p class="course-info">CCAI9028: The Age of Big Data</p>
+                    <p class="subtitle">Transforming Complex Data into Stunning Visual Insights With AI</p>
+                    
+                    <div class="divider"></div>
+                    
+                    <p class="instruction">Choose your visualization journey:</p>
+                    
+                    <div class="choice-container">
+                        <!-- Option 1: Static Python Visualization -->
+                        <div class="choice-card" onclick="navigateToPage('static/static1_base.html')">
+                            <div class="card-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="3" width="18" height="18" rx="2"/>
+                                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                                    <path d="M21 15l-5-5L5 21"/>
+                                </svg>
+                            </div>
+                            <h3>Static Visualization</h3>
+                            <p>Python-based image generation</p>
+                            <ul class="feature-list">
+                                <li>Publication-ready charts</li>
+                                <li>AI-generated code</li>
+                            </ul>
+                            <div class="card-arrow">→</div>
+                        </div>
+                        
+                        <!-- Option 2: Interactive Visualization -->
+                        <div class="choice-card" onclick="navigateToPage('interactive/interactive1_levels.html')">
+                            <div class="card-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                                    <path d="M2 17l10 5 10-5"/>
+                                    <path d="M2 12l10 5 10-5"/>
+                                </svg>
+                            </div>
+                            <h3>Interactive Visualization</h3>
+                            <p>HTML-based dynamic charts</p>
+                            <ul class="feature-list">
+                                <li>Real-time interactions</li>
+                                <li>AI-generated code</li>
+                            </ul>
+                            <div class="card-arrow">→</div>
+                        </div>
+                    </div>
+                    
+                    <div class="footer-hint">
+                        <span class="pulse-dot"></span>
+                        Click a card to begin your journey
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Static section has been moved to static/static1_base.html, static2_image.html, static3_code.html -->
+        </div>
+    </div>
+    
+    <!-- Reveal.js -->
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script src="src/main.js"></script>
+    
+    <script>
+        // Hide loader when page is fully loaded
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                document.getElementById('pageLoader').classList.add('hidden');
+            }, 500);
+        });
+
+        // Show loader and navigate to external page
+        function navigateToPage(url) {
+            document.getElementById('pageLoader').classList.remove('hidden');
+            setTimeout(function() {
+                window.location.href = url;
+            }, 300);
+        }
+    </script>
+</body>
+</html>

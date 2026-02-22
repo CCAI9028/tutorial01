@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Visualization - HKU Rankings</title>
+    
+    <!-- Reveal.js CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/theme/black.css">
+    
+    <!-- Highlight.js for code syntax -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.8.0/styles/atom-one-dark.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="../src/style.css">
+    <link rel="stylesheet" href="../src/interactive.css">
+    
+    <style>
+        /* Ensure left and right sections have equal height */
+        .static-layout {
+            align-items: stretch;
+        }
+        
+        .output-section {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        
+        .output-section .interactive-layout {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 15px;
+        }
+        
+        .output-section .chart-container {
+            display: flex;
+            flex-direction: column;
+            transition: all 0.4s ease;
+            flex: 1;
+            min-height: 0;
+        }
+        
+        .output-section .chart-container.shifted {
+            flex: 0.6;
+        }
+        
+        .chart-wrapper {
+            flex: 1;
+            min-height: 120px;
+            transition: all 0.4s ease;
+        }
+        
+        .detail-panel {
+            display: flex;
+            flex-direction: column;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            max-height: 0;
+            opacity: 0;
+            margin-top: 0;
+            transition: all 0.4s ease;
+            flex: 0;
+        }
+        
+        .detail-panel.visible {
+            max-height: none;
+            opacity: 1;
+            margin-top: 15px;
+            flex: 0.4;
+        }
+        
+        .detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            background: rgba(0, 212, 255, 0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .detail-header.qs {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(0, 212, 255, 0.05));
+        }
+        
+        .detail-header.the {
+            background: linear-gradient(135deg, rgba(244, 114, 182, 0.2), rgba(244, 114, 182, 0.05));
+        }
+        
+        .detail-header h3 {
+            margin: 0;
+            font-size: 0.95rem;
+            color: #fff;
+        }
+        
+        .close-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: #fff;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .detail-content {
+            padding: 1px 15px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        
+        .year-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-bottom: -14px;
+        }
+        
+        .year-badge.qs {
+            background: linear-gradient(135deg, #00d4ff, #0099cc);
+        }
+        
+        .year-badge.the {
+            background: linear-gradient(135deg, #f472b6, #db2777);
+        }
+        
+        .ranking-section h4 {
+            font-size: 0.9rem;
+            margin: 0 0 10px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .rank-badge {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+        }
+        
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+        
+        .metric-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 8px 10px;
+            border-radius: 8px;
+            border-left: 3px solid;
+        }
+        
+        .metric-item.qs {
+            border-color: #00d4ff;
+        }
+        
+        .metric-item.the {
+            border-color: #f472b6;
+        }
+        
+        .metric-label {
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 3px;
+        }
+        
+        .metric-value {
+            font-size: 0.95rem;
+            font-weight: bold;
+            color: #fff;
+        }
+        
+        .chart-legend {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            padding: 8px 0;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        
+        .legend-dot.qs {
+            background: #00d4ff;
+        }
+        
+        .legend-dot.the {
+            background: #f472b6;
+        }
+        
+        .chart-hint {
+            text-align: center;
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.5);
+            padding: 5px 0;
+        }
+        
+        .chart-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 8px;
+        }
+        
+        .chart-header h3 {
+            margin: 0;
+            font-size: 0.95rem;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Animation -->
+    <div class="page-loader" id="pageLoader">
+        <div class="loader-spinner"></div>
+        <div class="loader-text">Loading</div>
+        <div class="loader-dots">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </div>
+
+    <div class="reveal">
+        <div class="slides">
+            <section data-background-gradient="linear-gradient(135deg, #0f3460 0%, #1a1a2e 100%)">
+                <!-- Page Title -->
+                <div class="page-title">
+                    <h1>📊 Interactive Visualization</h1>
+                    <div class="subtitle">HKU World University <span class="highlight-keyword">Rankings</span> (2023-2026)</div>
+                </div>
+                
+                <div class="static-layout">
+                    <!-- Left: Prompt Section -->
+                    <div class="prompt-section">
+                        <button class="prompt-copy-btn" onclick="copyPrompt()">📋 Copy Prompt</button>
+                        <div class="section-header">
+                            <span class="section-icon">💬</span>
+                            <h3>Prompt</h3>
+                        </div>
+                        <div class="prompt-content scrollable" id="prompt-text">
+                            <p>I want to create an <span class="replaceable" title="Can be: bar chart, pie chart, line chart, etc.">interactive dual-line chart</span> using HTML/JavaScript with Chart.js.</p>
+                            <p class="highlight-text">Please generate a <strong>complete HTML page</strong> with the following features:</p>
+                            <ul style="text-align: left; font-size: 0.85rem; margin: 10px 0; padding-left: 20px;">
+                                <li>Display QS and THE rankings as two separate lines</li>
+                                <li>Y-axis reversed (lower rank = better position)</li>
+                                <li>Clickable data points showing detailed metrics panel</li>
+                                <li>Smooth animations and hover effects</li>
+                            </ul>
+                            <p class="highlight-text">Here is the <strong>reference code logic</strong>:</p>
+                            <pre class="data-block code-example"><code class="language-javascript">// Key logic for dual-line ranking chart
+const chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: years,
+        datasets: [
+            { label: 'QS', data: qsRanks,
+              borderColor: '#00d4ff',
+              pointRadius: 8 },
+            { label: 'THE', data: theRanks,
+              borderColor: '#f472b6',
+              pointRadius: 8 }
+        ]
+    },
+    options: {
+        scales: {
+            y: { reverse: true, min: 0, max: 50 }
+        },
+        onClick: (event, elements) => {
+            if (elements.length > 0) {
+                showDetailPanel(year, type);
+            }
+        }
+    }
+});</code></pre>
+                            <p class="highlight-text">Use this <strong>data</strong>:</p>
+                            <pre class="data-block"><code>rankingData = [
+    { year: 2026, 
+      QS: { rank: 11, score: 94.2 }, 
+      THE: { rank: 33, score: 80.5 } },
+    { year: 2025, 
+      QS: { rank: 17, score: 87.6 }, 
+      THE: { rank: 35, score: 79.6 } },
+    { year: 2024, 
+      QS: { rank: 26, score: 85.6 }, 
+      THE: { rank: 35, score: 80.3 } },
+    { year: 2023, 
+      QS: { rank: 21, score: 87 }, 
+      THE: { rank: 31, score: 78.5 } }
+]</code></pre>
+                        </div>
+                        <div class="prompt-tag">Interactive Chart Prompt</div>
+                    </div>
+                    
+                    <!-- Right: Output Section -->
+                    <div class="output-section">
+                        <div class="interactive-layout">
+                            <!-- Chart Section -->
+                            <div class="chart-container" id="chartContainer">
+                                <div class="chart-header">
+                                    <span class="section-icon">📈</span>
+                                    <h3>QS & THE Rankings Over Years</h3>
+                                </div>
+                                <div class="chart-wrapper">
+                                    <canvas id="rankChart"></canvas>
+                                </div>
+                                <div class="chart-legend">
+                                    <div class="legend-item">
+                                        <span class="legend-dot qs"></span>
+                                        <span>QS Ranking</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <span class="legend-dot the"></span>
+                                        <span>THE Ranking</span>
+                                    </div>
+                                </div>
+                                <div class="chart-hint">Click on any data point to view detailed metrics</div>
+                            </div>
+                            
+                            <!-- Detail Panel -->
+                            <div class="detail-panel" id="detailPanel">
+                                <div class="detail-header" id="detailHeader">
+                                    <h3><span id="detailIcon">📋</span> <span id="detailTitle">Detailed Metrics</span></h3>
+                                    <button class="close-btn" onclick="closeDetail()">×</button>
+                                </div>
+                                <div class="detail-content" id="detailContent">
+                                    <!-- Dynamic content will be inserted here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Navigation -->
+                <div class="nav-buttons">
+                    <button class="nav-btn prev-btn" onclick="navigateTo('interactive1_levels.html')">← Previous</button>
+                    <span class="page-indicator">2 / 3</span>
+                    <button class="nav-btn next-btn" onclick="navigateTo('interactive3_students.html')">Next →</button>
+                </div>
+            </section>
+        </div>
+    </div>
+    
+    <!-- Reveal.js -->
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.js"></script>
+    <!-- Highlight.js -->
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.8.0/lib/highlight.min.js"></script>
+    
+    <script>
+        // HKU Ranking Data
+        const rankingData = [
+            {
+                "year": 2026,
+                "QS": { "rank": 11, "Overall Score:": 94.2, "Citations per Faculty": 96.6, "Faculty Student Ratio": 85.3, "Employer Reputation": 82.5 },
+                "THE": { "rank": 33, "Overall Score:": 80.5, "Teaching": 68.3, "Research Environment": 70.8, "Research Quality": 95.6 }
+            },
+            {
+                "year": 2025,
+                "QS": { "rank": 17, "Overall Score:": 87.6, "Citations per Faculty": 86.4, "Faculty Student Ratio": 81.2, "Employer Reputation": 59.4 },
+                "THE": { "rank": 35, "Overall Score:": 79.6, "Teaching": 65, "Research Environment": 70.5, "Research Quality": 96.1 }
+            },
+            {
+                "year": 2024,
+                "QS": { "rank": 26, "Overall Score:": 85.6, "Citations per Faculty": 97.6, "Faculty Student Ratio": 82.9, "Employer Reputation": 51.4 },
+                "THE": { "rank": 35, "Overall Score:": 80.3, "Teaching": 65.6, "Research Environment": 72.3, "Research Quality": 96.4 }
+            },
+            {
+                "year": 2023,
+                "QS": { "rank": 21, "Overall Score:": 87, "Citations per Faculty": 72.6, "Faculty Student Ratio": 84.2, "Employer Reputation": 62.9 },
+                "THE": { "rank": 31, "Overall Score:": 78.5, "Teaching": 65.6, "Research Environment": 74.1, "Research Quality": 92.4 }
+            }
+        ];
+        
+        const sortedData = [...rankingData].sort((a, b) => a.year - b.year);
+        const years = sortedData.map(d => d.year);
+        const qsRanks = sortedData.map(d => d.QS.rank);
+        const theRanks = sortedData.map(d => d.THE.rank);
+        
+        let chart = null;
+        let currentSelection = null;
+        let isAnimating = false;
+        
+        function initChart() {
+            const ctx = document.getElementById('rankChart').getContext('2d');
+            
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: years,
+                    datasets: [
+                        {
+                            label: 'QS Ranking', data: qsRanks,
+                            borderColor: '#00d4ff', backgroundColor: 'rgba(0, 212, 255, 0.1)',
+                            pointBackgroundColor: '#00d4ff', pointBorderColor: '#fff',
+                            pointBorderWidth: 2, pointRadius: 8, pointHoverRadius: 12,
+                            pointHoverBackgroundColor: '#00d4ff', pointHoverBorderColor: '#fff',
+                            pointHoverBorderWidth: 3, tension: 0.3, fill: false, borderWidth: 3
+                        },
+                        {
+                            label: 'THE Ranking', data: theRanks,
+                            borderColor: '#f472b6', backgroundColor: 'rgba(244, 114, 182, 0.1)',
+                            pointBackgroundColor: '#f472b6', pointBorderColor: '#fff',
+                            pointBorderWidth: 2, pointRadius: 8, pointHoverRadius: 12,
+                            pointHoverBackgroundColor: '#f472b6', pointHoverBorderColor: '#fff',
+                            pointHoverBorderWidth: 3, tension: 0.3, fill: false, borderWidth: 3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    interaction: { intersect: true, mode: 'point' },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 52, 96, 0.95)',
+                            titleColor: '#fff', bodyColor: 'rgba(255, 255, 255, 0.8)',
+                            borderColor: 'rgba(255, 255, 255, 0.2)', borderWidth: 1, padding: 12,
+                            displayColors: true,
+                            callbacks: {
+                                title: ctx => 'Year ' + ctx[0].label,
+                                label: ctx => ctx.dataset.label + ': #' + ctx.raw,
+                                afterBody: () => '\n👆 Click for details'
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(255, 255, 255, 0.1)', drawBorder: false },
+                            ticks: { color: 'rgba(255, 255, 255, 0.7)', font: { size: 12, weight: 'bold' } },
+                            title: { display: true, text: 'Year', color: 'rgba(255, 255, 255, 0.7)', font: { size: 14 } }
+                        },
+                        y: {
+                            reverse: true, min: 0, max: 50,
+                            grid: { color: 'rgba(255, 255, 255, 0.1)', drawBorder: false },
+                            ticks: { color: 'rgba(255, 255, 255, 0.7)', font: { size: 12 }, callback: v => '#' + v },
+                            title: { display: true, text: 'World Ranking (Lower is Better)', color: 'rgba(255, 255, 255, 0.7)', font: { size: 14 } }
+                        }
+                    },
+                    onClick: function(event, elements) {
+                        if (elements.length > 0 && !isAnimating) {
+                            const element = elements[0];
+                            const year = years[element.index];
+                            const type = element.datasetIndex === 0 ? 'QS' : 'THE';
+                            handlePointClick(year, type);
+                        }
+                    },
+                    onHover: (event, elements) => {
+                        event.native.target.style.cursor = elements.length > 0 ? 'pointer' : 'default';
+                    }
+                }
+            });
+        }
+        
+        function handlePointClick(year, type) {
+            const panel = document.getElementById('detailPanel');
+            const chartContainer = document.getElementById('chartContainer');
+            const isNewSelection = !currentSelection || currentSelection.year !== year || currentSelection.type !== type;
+            
+            if (!isNewSelection) return; // Same point clicked, do nothing
+            
+            if (panel.classList.contains('visible')) {
+                // Already showing panel, close it first then reopen with new content
+                isAnimating = true;
+                panel.classList.remove('visible');
+                
+                // Wait for close animation, then show new content
+                setTimeout(() => {
+                    showDetail(year, type);
+                    panel.classList.add('visible');
+                    isAnimating = false;
+                }, 300);
+            } else {
+                // Show panel for first time
+                chartContainer.classList.add('shifted');
+                showDetail(year, type);
+                setTimeout(() => chart.resize(), 450);
+            }
+        }
+        
+        function showDetail(year, type) {
+            const data = sortedData.find(d => d.year === year);
+            if (!data) return;
+            
+            currentSelection = { year, type };
+            
+            const panel = document.getElementById('detailPanel');
+            const header = document.getElementById('detailHeader');
+            const content = document.getElementById('detailContent');
+            
+            header.className = 'detail-header ' + type.toLowerCase();
+            document.getElementById('detailIcon').textContent = type === 'QS' ? '🏆' : '🎓';
+            document.getElementById('detailTitle').textContent = type + ' Ranking Details';
+            
+            if (type === 'QS') {
+                content.innerHTML = `
+                    <div style="text-align: center; margin-bottom: 4px;">
+                        <span class="year-badge qs">📅 Year ${data.year}</span>
+                        <span class="rank-badge" style="margin-left: 10px;">#${data.QS.rank}</span>
+                    </div>
+                    <div class="ranking-section qs">
+                        <div class="metric-grid">
+                            <div class="metric-item qs"><div class="metric-label">Overall Score</div><div class="metric-value">${data.QS["Overall Score:"]}</div></div>
+                            <div class="metric-item qs"><div class="metric-label">Citations per Faculty</div><div class="metric-value">${data.QS["Citations per Faculty"]}</div></div>
+                            <div class="metric-item qs"><div class="metric-label">Faculty Student Ratio</div><div class="metric-value">${data.QS["Faculty Student Ratio"]}</div></div>
+                            <div class="metric-item qs"><div class="metric-label">Employer Reputation</div><div class="metric-value">${data.QS["Employer Reputation"]}</div></div>
+                        </div>
+                    </div>`;
+            } else {
+                content.innerHTML = `
+                    <div style="text-align: center; margin-bottom: 4px;">
+                        <span class="year-badge the">📅 Year ${data.year}</span>
+                        <span class="rank-badge" style="margin-left: 10px;">#${data.THE.rank}</span>
+                    </div>
+                    <div class="ranking-section the">
+                        <div class="metric-grid">
+                            <div class="metric-item the"><div class="metric-label">Overall Score</div><div class="metric-value">${data.THE["Overall Score:"]}</div></div>
+                            <div class="metric-item the"><div class="metric-label">Teaching</div><div class="metric-value">${data.THE["Teaching"]}</div></div>
+                            <div class="metric-item the"><div class="metric-label">Research Environment</div><div class="metric-value">${data.THE["Research Environment"]}</div></div>
+                            <div class="metric-item the"><div class="metric-label">Research Quality</div><div class="metric-value">${data.THE["Research Quality"]}</div></div>
+                        </div>
+                    </div>`;
+            }
+            
+            panel.classList.add('visible');
+        }
+        
+        function closeDetail() {
+            currentSelection = null;
+            const chartContainer = document.getElementById('chartContainer');
+            const panel = document.getElementById('detailPanel');
+            chartContainer.classList.remove('shifted');
+            panel.classList.remove('visible');
+            setTimeout(() => chart.resize(), 450);
+        }
+        
+        // Copy prompt to clipboard
+        function copyPrompt() {
+            const promptElement = document.getElementById('prompt-text');
+            const text = promptElement.innerText.replace(/🔄/g, '').replace(/💡.*$/gm, '').trim();
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.querySelector('.prompt-copy-btn');
+                btn.textContent = '✓ Copied!';
+                setTimeout(() => {
+                    btn.textContent = '📋 Copy Prompt';
+                }, 2000);
+            });
+        }
+        
+        window.addEventListener('load', () => setTimeout(() => document.getElementById('pageLoader').classList.add('hidden'), 500));
+        
+        function navigateTo(url) {
+            document.getElementById('pageLoader').classList.remove('hidden');
+            setTimeout(() => window.location.href = url, 300);
+        }
+
+        Reveal.initialize({ hash: false, history: false, center: false, width: '100%', height: '100%', margin: 0, controls: false, progress: false, keyboard: true });
+        Reveal.on('ready', () => initChart());
+        
+        // Initialize syntax highlighting
+        hljs.highlightAll();
+    </script>
+</body>
+</html>

@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Static Visualization - Code Example Prompt</title>
+    
+    <!-- Reveal.js CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/theme/black.css">
+    
+    <!-- Highlight.js for code syntax -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.8.0/styles/atom-one-dark.min.css">
+    
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="../src/style.css">
+</head>
+<body>
+    <!-- Loading Animation -->
+    <div class="page-loader" id="pageLoader">
+        <div class="loader-spinner"></div>
+        <div class="loader-text">Loading</div>
+        <div class="loader-dots">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </div>
+
+    <div class="reveal">
+        <div class="slides">
+<section data-background-gradient="linear-gradient(135deg, #0f3460 0%, #1a1a2e 100%)">
+<!-- Page Title -->
+                <div class="page-title">
+                    <h1>📊 Static Visualization</h1>
+                    <div class="subtitle">Generate Code with <span class="highlight-keyword">Code-Based Style Reference</span></div>
+                </div>
+                
+                <div class="static-layout">
+                    <!-- Left: Prompt Section -->
+                    <div class="prompt-section">
+                        <button class="prompt-copy-btn" onclick="copyPrompt()">📋 Copy Prompt</button>
+                        <div class="section-header">
+                            <span class="section-icon">💬</span>
+                            <h3>Prompt</h3>
+                        </div>
+                        <div class="prompt-content scrollable" id="prompt-text">
+                            <p>I want to draw a <span class="replaceable" title="Can be replaced with: barplot, scatterplot, heatmap, etc.">line plot</span>; please generate directly executable Python code for data visualization.</p>
+                            <p class="highlight-text">I have provided an <strong>example code</strong>; please FIRST analyze the detailed style of this example code (including color, format, legend, background, grid lines, and other visual elements):</p>
+                            <pre class="data-block code-example"><code class="language-python">def plot_rankings(hku_rank_table):
+    df_plot = pd.DataFrame(hku_rank_table)
+    plt.gca().invert_yaxis()
+    
+    g = sns.lineplot(
+        x='Year', y='Rank', 
+        color='g', marker="o", 
+        markersize=6, data=df_plot,
+        label='Rank'
+    )
+    
+    g.set(
+        xticks=df_plot["Year"],
+        yticks=[1, 15, 30, 45]
+    )
+    g.legend(loc="upper right")
+    
+    plt.fill_between(
+        x=df_plot['Year'],
+        y1=df_plot['Rank'],
+        y2=[45] * len(df_plot['Rank']),
+        alpha=0.1, facecolor='g'
+    )
+    sns.despine()
+    # ... more styling code</code></pre>
+                            <p class="highlight-text">, and THEN generate the code based on your analysis to replicate this exact style using the following data:</p>
+                            <pre class="data-block"><code>hku_rank_data = {
+    "Year": [2021, 2022, 2023, 2024, 2025],
+    "QS"  : [22,   22,   21,   26,  17],
+    "THE" : [39,   30,   31,   35,  35],
+}</code></pre>
+                        </div>
+                        <div class="prompt-tag">Example 3: Code-Based Prompt</div>
+                    </div>
+                    
+                    <!-- Right: Output Section -->
+                    <div class="output-section">
+                        <!-- Code Block (Collapsible) -->
+                        <div class="code-block">
+                            <div class="code-header" onclick="toggleCode(this)">
+                                <span class="section-icon">📄</span>
+                                <h4>Generated Code</h4>
+                                <span class="toggle-icon">▼</span>
+                                <button class="copy-btn" onclick="copyCode(event, 'code3')">📋 Copy</button>
+                            </div>
+                            <div class="code-content collapsed" id="code3">
+                                <pre><code class="language-python">import matplotlib.pyplot as plt
+
+# Data
+hku_rank_data = {
+    "Year": [2021, 2022, 2023, 2024, 2025],
+    "QS":   [22,   22,   21,   26,   17],
+    "THE":  [39,   30,   31,   35,   35],
+}
+
+years = hku_rank_data["Year"]
+qs = hku_rank_data["QS"]
+the = hku_rank_data["THE"]
+
+# Colors chosen to match the sample style
+qs_color = 'gold'
+the_color = 'green'
+
+plt.figure(figsize=(6.4, 4.8))
+
+# QS line and area
+plt.plot(years, qs, color=qs_color, marker='o', linewidth=2, label='QS')
+plt.fill_between(years, qs, max(max(qs), max(the)) + 2,
+                 color=qs_color, alpha=0.15)
+
+# THE line and area
+plt.plot(years, the, color=the_color, marker='o', linewidth=2, label='THE')
+plt.fill_between(years, the, max(max(qs), max(the)) + 2,
+                 color=the_color, alpha=0.15)
+
+# Axis labels
+plt.xlabel("Year")
+plt.ylabel("Rankings")
+
+# Invert y-axis so better rankings (smaller numbers) appear higher
+y_min = min(min(qs), min(the)) - 2
+y_max = max(max(qs), max(the)) + 2
+plt.ylim(y_max, y_min)  # inverted
+
+# Optional: tidy y-ticks (every 5 units)
+plt.yticks(range(15, 41, 5))
+
+# Legend in upper right with white semi-transparent background
+legend = plt.legend(loc='upper right', frameon=True)
+legend.get_frame().set_facecolor('white')
+legend.get_frame().set_alpha(0.8)
+
+# Remove grid for a clean look
+plt.grid(False)
+
+# Add value labels with rounded, semi-transparent backgrounds
+for x, y in zip(years, qs):
+    plt.annotate(f"{y}",
+                 (x, y),
+                 textcoords="offset points",
+                 xytext=(0, -20),
+                 ha='center',
+                 bbox=dict(boxstyle="round,pad=0.3",
+                           fc=qs_color, alpha=0.3, ec='none'),
+                 color='black')
+
+for x, y in zip(years, the):
+    plt.annotate(f"{y}",
+                 (x, y),
+                 textcoords="offset points",
+                 xytext=(0, -20),
+                 ha='center',
+                 bbox=dict(boxstyle="round,pad=0.3",
+                           fc=the_color, alpha=0.3, ec='none'),
+                 color='black')
+
+plt.tight_layout()
+plt.savefig('code_example_prompt.png')</code></pre>
+                            </div>
+                        </div>
+                        
+                        <!-- Image Block -->
+                        <div class="image-block">
+                            <div class="image-header">
+                                <span class="section-icon">🖼️</span>
+                                <h4>Generated Visualization</h4>
+                            </div>
+                            <div class="image-content">
+                                <img src="../src/images/code_example_prompt.png" alt="Code Example Prompt Visualization">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Navigation -->
+                <div class="nav-buttons">
+                    <button class="nav-btn prev-btn" onclick="navigateTo('static2_image.html')">← Prev</button>
+                    <span class="page-indicator">3 / 3</span>
+                    <button class="nav-btn next-btn" onclick="navigateTo('../index.html#welcome')">Home →</button>
+                </div>
+            </section>
+        </div>
+    </div>
+    
+    <!-- Reveal.js -->
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.js"></script>
+    <!-- Highlight.js -->
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.8.0/lib/highlight.min.js"></script>
+    
+    <script>
+        // Hide loader when page is fully loaded
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                document.getElementById('pageLoader').classList.add('hidden');
+            }, 500);
+        });
+
+        // Show loader on navigation
+        function navigateTo(url) {
+            document.getElementById('pageLoader').classList.remove('hidden');
+            setTimeout(function() {
+                window.location.href = url;
+            }, 300);
+        }
+
+        // Initialize Reveal.js
+        Reveal.initialize({
+            hash: false,
+            history: false,
+            center: false,
+            width: '100%',
+            height: '100%',
+            margin: 0,
+            controls: false,
+            progress: false,
+            keyboard: true
+        });
+        
+        // Initialize syntax highlighting
+        hljs.highlightAll();
+        
+        // Toggle code visibility
+        function toggleCode(header) {
+            const content = header.nextElementSibling;
+            const icon = header.querySelector('.toggle-icon');
+            content.classList.toggle('collapsed');
+            icon.textContent = content.classList.contains('collapsed') ? '▼' : '▲';
+        }
+        
+        // Copy code to clipboard
+        function copyCode(event, codeId) {
+            event.stopPropagation();
+            const codeElement = document.querySelector('#' + codeId + ' code');
+            const text = codeElement.textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = event.target;
+                btn.textContent = '✓ Copied!';
+                setTimeout(() => {
+                    btn.textContent = '📋 Copy';
+                }, 2000);
+            });
+        }
+        
+        // Copy prompt to clipboard
+        function copyPrompt() {
+            const promptElement = document.getElementById('prompt-text');
+            // Get text content, preserving line breaks
+            const text = promptElement.innerText.replace(/🔄/g, '').replace(/💡.*$/gm, '').trim();
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.querySelector('.prompt-copy-btn');
+                btn.textContent = '✓ Copied!';
+                setTimeout(() => {
+                    btn.textContent = '📋 Copy Prompt';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

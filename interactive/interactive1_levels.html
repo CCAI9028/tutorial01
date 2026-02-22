@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Visualization - HKU Student Statistics</title>
+    
+    <!-- Reveal.js CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/theme/black.css">
+    
+    <!-- Highlight.js for code syntax -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.8.0/styles/atom-one-dark.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="../src/style.css">
+    <link rel="stylesheet" href="../src/interactive.css">
+    
+    <style>
+        .bar-chart-wrapper {
+            width: 100%;
+            flex: 1;
+            min-height: 200px;
+            padding: 10px;
+        }
+        
+        .view-toggle-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            gap: 10px;
+            flex-shrink: 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .view-toggle-btn {
+            padding: 8px 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .view-toggle-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .view-toggle-btn.active {
+            background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+            border-color: #00d4ff;
+            color: #fff;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.4);
+        }
+        
+        .bar-legend {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 10px;
+            padding: 8px;
+        }
+        
+        .bar-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 10px;
+            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+            cursor: default;
+        }
+        
+        .bar-legend-item.highlight {
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
+        }
+        
+        .bar-legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 4px;
+        }
+        
+        .bar-legend-text {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .bar-tooltip {
+            position: fixed;
+            padding: 12px 16px;
+            background: rgba(15, 52, 96, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            color: #fff;
+            font-size: 0.9rem;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+        
+        .bar-tooltip.visible {
+            opacity: 1;
+        }
+        
+        .bar-tooltip-title {
+            font-weight: bold;
+            margin-bottom: 8px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .bar-tooltip-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            margin: 4px 0;
+        }
+        
+        .bar-tooltip-label {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .bar-tooltip-value {
+            font-weight: bold;
+        }
+        
+        /* Ensure left and right sections have equal height */
+        .static-layout {
+            align-items: stretch;
+        }
+        
+        .output-section {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        
+        .output-section .card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 15px 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .bar-chart-wrapper {
+            flex: 1;
+            min-height: 200px;
+        }
+        
+        .chart-header {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 10px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .chart-header h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #fff;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Animation -->
+    <div class="page-loader" id="pageLoader">
+        <div class="loader-spinner"></div>
+        <div class="loader-text">Loading</div>
+        <div class="loader-dots">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </div>
+
+    <!-- Custom Tooltip -->
+    <div class="bar-tooltip" id="barTooltip">
+        <div class="bar-tooltip-title" id="tooltipTitle"></div>
+        <div class="bar-tooltip-row">
+            <span class="bar-tooltip-label">Count:</span>
+            <span class="bar-tooltip-value" id="tooltipCount"></span>
+        </div>
+        <div class="bar-tooltip-row">
+            <span class="bar-tooltip-label">Percentage:</span>
+            <span class="bar-tooltip-value" id="tooltipPercent"></span>
+        </div>
+    </div>
+
+    <div class="reveal">
+        <div class="slides">
+            <section data-background-gradient="linear-gradient(135deg, #0f3460 0%, #1a1a2e 100%)">
+                <!-- Page Title -->
+                <div class="page-title">
+                    <h1>📊 Interactive Visualization</h1>
+                    <div class="subtitle">HKU Student <span class="highlight-keyword">Statistics</span> by Level</div>
+                </div>
+                
+                <div class="static-layout">
+                    <!-- Left: Prompt Section -->
+                    <div class="prompt-section">
+                        <button class="prompt-copy-btn" onclick="copyPrompt()">📋 Copy Prompt</button>
+                        <div class="section-header">
+                            <span class="section-icon">💬</span>
+                            <h3>Prompt</h3>
+                        </div>
+                        <div class="prompt-content scrollable" id="prompt-text">
+                            <p>I want to create an <span class="replaceable" title="Can be: bar chart, pie chart, line chart, etc.">interactive horizontal stacked bar chart</span> using HTML/JavaScript with Chart.js.</p>
+                            <p class="highlight-text">Please generate a <strong>complete HTML page</strong> with the following features:</p>
+                            <ul style="text-align: left; font-size: 0.85rem; margin: 10px 0; padding-left: 20px;">
+                                <li>Toggle buttons to switch between two views</li>
+                                <li>Custom tooltip on hover showing value and percentage</li>
+                                <li>Legend items highlight when hovering corresponding bar</li>
+                                <li>Rounded bar corners with stacked layout</li>
+                            </ul>
+                            <p class="highlight-text">Here is the <strong>reference code logic</strong>:</p>
+                            <pre class="data-block code-example"><code class="language-javascript">// Key logic for stacked bar chart
+const datasets = levels.map((level, idx) => ({
+    label: level,
+    data: categories.map(cat => data[cat][idx]),
+    backgroundColor: colors[idx] + 'cc',
+    borderRadius: 4,
+    borderSkipped: false
+}));
+
+new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets },
+    options: {
+        indexAxis: 'y',  // Horizontal bars
+        scales: {
+            x: { stacked: true, max: 40000 },
+            y: { stacked: true }
+        },
+        onHover: (event, elements) => {
+            // Update tooltip and highlight legend
+        }
+    }
+});</code></pre>
+                            <p class="highlight-text">Use this <strong>data</strong>:</p>
+                            <pre class="data-block"><code>studentData = {
+    "Programme": ["Undergraduate", 
+                  "Taught Postgraduate", 
+                  "Research Postgraduate"],
+    "Student Admission": [4638, 11067, 1089],
+    "Student Enrolment": [18491, 16541, 4134],
+    "Graduates": [3847, 8747, 662]
+}</code></pre>
+                        </div>
+                        <div class="prompt-tag">Interactive Chart Prompt</div>
+                    </div>
+                    
+                    <!-- Right: Output Section -->
+                    <div class="output-section">
+                        <!-- Chart Container -->
+                        <div class="card interactive-card">
+                            <!-- View Toggle Buttons inside card -->
+                            <div class="view-toggle-container">
+                                <button class="view-toggle-btn active" id="viewByCategory" onclick="switchView('category')">
+                                    📊 View by Category
+                                </button>
+                                <button class="view-toggle-btn" id="viewByLevel" onclick="switchView('level')">
+                                    🎓 View by Level
+                                </button>
+                            </div>
+                            <div class="chart-header">
+                                <span class="section-icon">📈</span>
+                                <h3 id="chartTitle">Student Statistics by Category</h3>
+                            </div>
+                            <div class="bar-chart-wrapper">
+                                <canvas id="barChart"></canvas>
+                            </div>
+                            <div class="bar-legend" id="barLegend"></div>
+                            <div class="chart-hint">Hover over bars to see detailed information</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Navigation -->
+                <div class="nav-buttons">
+                    <button class="nav-btn prev-btn" onclick="navigateTo('../index.html')">← Home</button>
+                    <span class="page-indicator">1 / 3</span>
+                    <button class="nav-btn next-btn" onclick="navigateTo('interactive2_rank.html')">Next →</button>
+                </div>
+            </section>
+        </div>
+    </div>
+    
+    <!-- Reveal.js -->
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.js"></script>
+    <!-- Highlight.js -->
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.8.0/lib/highlight.min.js"></script>
+    
+    <script>
+        // Student Statistics Data
+        const studentData = {
+            "Programme": ["Undergraduate", "Taught Postgraduate", "Research Postgraduate", "All Levels"],
+            "Student Admission": [4638, 11067, 1089, 9773],
+            "Student Enrolment": [18491, 16541, 4134, 39166],
+            "Graduates": [3847, 8747, 662, 13256]
+        };
+        
+        const levels = studentData["Programme"].slice(0, 3);
+        const categories = ["Student Admission", "Student Enrolment", "Graduates"];
+        
+        // Colors matching interactive2_students.html
+        const levelColors = [
+            '#00d4ff',  // Undergraduate - cyan
+            '#f472b6',  // Taught Postgraduate - pink
+            '#a78bfa'   // Research Postgraduate - purple
+        ];
+        
+        const categoryColors = [
+            '#34d399',  // Student Admission - green
+            '#fbbf24',  // Student Enrolment - yellow/gold
+            '#f87171'   // Graduates - red/coral
+        ];
+        
+        let barChart = null;
+        let currentView = 'category';
+        let highlightedIndex = -1;
+        
+        function initChart() {
+            createChart('category');
+        }
+        
+        function createChart(viewType) {
+            const ctx = document.getElementById('barChart').getContext('2d');
+            
+            if (barChart) {
+                barChart.destroy();
+            }
+            
+            let datasets, labels, colors, legendItems;
+            
+            if (viewType === 'category') {
+                // Group by category (Y-axis: categories, stacked by levels)
+                labels = categories;
+                colors = levelColors;
+                legendItems = levels;
+                
+                datasets = levels.map((level, levelIdx) => ({
+                    label: level,
+                    data: categories.map(cat => studentData[cat][levelIdx]),
+                    backgroundColor: levelColors[levelIdx] + 'cc',
+                    borderColor: levelColors[levelIdx],
+                    borderWidth: 1,
+                    borderRadius: 4,
+                    borderSkipped: false
+                }));
+                
+                document.getElementById('chartTitle').textContent = 'Student Statistics by Category';
+            } else {
+                // Group by level (Y-axis: levels, stacked by categories)
+                labels = levels;
+                colors = categoryColors;
+                legendItems = categories;
+                
+                datasets = categories.map((cat, catIdx) => ({
+                    label: cat,
+                    data: levels.map((_, levelIdx) => studentData[cat][levelIdx]),
+                    backgroundColor: categoryColors[catIdx] + 'cc',
+                    borderColor: categoryColors[catIdx],
+                    borderWidth: 1,
+                    borderRadius: 4,
+                    borderSkipped: false
+                }));
+                
+                document.getElementById('chartTitle').textContent = 'Student Statistics by Level';
+            }
+            
+            // Update legend
+            updateLegend(legendItems, colors);
+            
+            barChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: datasets
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: false }
+                    },
+                    scales: {
+                        x: {
+                            stacked: true,
+                            max: 40000,
+                            grid: { color: 'rgba(255, 255, 255, 0.1)', drawBorder: false },
+                            ticks: { 
+                                color: 'rgba(255, 255, 255, 0.7)', 
+                                font: { size: 11 },
+                                callback: v => v >= 1000 ? (v/1000) + 'k' : v
+                            },
+                            title: { 
+                                display: true, 
+                                text: 'Total', 
+                                color: 'rgba(255, 255, 255, 0.7)', 
+                                font: { size: 13 } 
+                            }
+                        },
+                        y: {
+                            stacked: true,
+                            grid: { display: false },
+                            ticks: { 
+                                color: 'rgba(255, 255, 255, 0.9)', 
+                                font: { size: 12, weight: 'bold' } 
+                            }
+                        }
+                    },
+                    barPercentage: 0.6,
+                    categoryPercentage: 0.8,
+                    onHover: (event, elements) => {
+                        handleBarHover(event, elements);
+                    }
+                }
+            });
+            
+            // Add mousemove listener for tooltip positioning
+            const canvas = document.getElementById('barChart');
+            canvas.addEventListener('mousemove', updateTooltipPosition);
+            canvas.addEventListener('mouseleave', hideTooltip);
+        }
+        
+        function updateLegend(items, colors) {
+            const legendContainer = document.getElementById('barLegend');
+            legendContainer.innerHTML = items.map((item, idx) => `
+                <div class="bar-legend-item" data-index="${idx}">
+                    <span class="bar-legend-dot" style="background-color: ${colors[idx]}"></span>
+                    <span class="bar-legend-text">${item}</span>
+                </div>
+            `).join('');
+        }
+        
+        function handleBarHover(event, elements) {
+            const tooltip = document.getElementById('barTooltip');
+            const legendItems = document.querySelectorAll('.bar-legend-item');
+            
+            // Reset all legend items
+            legendItems.forEach(item => item.classList.remove('highlight'));
+            
+            if (elements.length > 0) {
+                const element = elements[0];
+                const datasetIndex = element.datasetIndex;
+                const dataIndex = element.index;
+                const dataset = barChart.data.datasets[datasetIndex];
+                const value = dataset.data[dataIndex];
+                const label = barChart.data.labels[dataIndex];
+                
+                // Calculate total for percentage
+                let total = 0;
+                barChart.data.datasets.forEach(ds => {
+                    total += ds.data[dataIndex];
+                });
+                const percentage = ((value / total) * 100).toFixed(1);
+                
+                // Update tooltip content
+                document.getElementById('tooltipTitle').textContent = `${dataset.label} - ${label}`;
+                document.getElementById('tooltipCount').textContent = value.toLocaleString();
+                document.getElementById('tooltipPercent').textContent = percentage + '%';
+                
+                // Highlight corresponding legend item
+                legendItems[datasetIndex].classList.add('highlight');
+                highlightedIndex = datasetIndex;
+                
+                tooltip.classList.add('visible');
+                event.native.target.style.cursor = 'pointer';
+            } else {
+                tooltip.classList.remove('visible');
+                highlightedIndex = -1;
+                event.native.target.style.cursor = 'default';
+            }
+        }
+        
+        function updateTooltipPosition(event) {
+            const tooltip = document.getElementById('barTooltip');
+            if (tooltip.classList.contains('visible')) {
+                const offsetX = 15;
+                const offsetY = 15;
+                
+                let x = event.clientX + offsetX;
+                let y = event.clientY + offsetY;
+                
+                // Prevent tooltip from going off-screen
+                const tooltipRect = tooltip.getBoundingClientRect();
+                if (x + tooltipRect.width > window.innerWidth) {
+                    x = event.clientX - tooltipRect.width - offsetX;
+                }
+                if (y + tooltipRect.height > window.innerHeight) {
+                    y = event.clientY - tooltipRect.height - offsetY;
+                }
+                
+                tooltip.style.left = x + 'px';
+                tooltip.style.top = y + 'px';
+            }
+        }
+        
+        function hideTooltip() {
+            const tooltip = document.getElementById('barTooltip');
+            tooltip.classList.remove('visible');
+            
+            const legendItems = document.querySelectorAll('.bar-legend-item');
+            legendItems.forEach(item => item.classList.remove('highlight'));
+            highlightedIndex = -1;
+        }
+        
+        function switchView(viewType) {
+            if (currentView === viewType) return;
+            
+            currentView = viewType;
+            
+            // Update button states
+            document.getElementById('viewByCategory').classList.toggle('active', viewType === 'category');
+            document.getElementById('viewByLevel').classList.toggle('active', viewType === 'level');
+            
+            // Recreate chart with animation
+            createChart(viewType);
+        }
+        
+        // Copy prompt to clipboard
+        function copyPrompt() {
+            const promptElement = document.getElementById('prompt-text');
+            const text = promptElement.innerText.replace(/🔄/g, '').replace(/💡.*$/gm, '').trim();
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.querySelector('.prompt-copy-btn');
+                btn.textContent = '✓ Copied!';
+                setTimeout(() => {
+                    btn.textContent = '📋 Copy Prompt';
+                }, 2000);
+            });
+        }
+        
+        window.addEventListener('load', () => setTimeout(() => document.getElementById('pageLoader').classList.add('hidden'), 500));
+        
+        function navigateTo(url) {
+            document.getElementById('pageLoader').classList.remove('hidden');
+            setTimeout(() => window.location.href = url, 300);
+        }
+
+        Reveal.initialize({ 
+            hash: false, 
+            history: false, 
+            center: false, 
+            width: '100%', 
+            height: '100%', 
+            margin: 0, 
+            controls: false, 
+            progress: false, 
+            keyboard: true 
+        });
+        Reveal.on('ready', () => initChart());
+        
+        // Initialize syntax highlighting
+        hljs.highlightAll();
+    </script>
+</body>
+</html>

@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Visualization - HKU Student Distribution</title>
+    
+    <!-- Reveal.js CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/theme/black.css">
+    
+    <!-- Highlight.js for code syntax -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.8.0/styles/atom-one-dark.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="../src/style.css">
+    <link rel="stylesheet" href="../src/interactive.css">
+    
+    <style>
+        /* Ensure left and right sections have equal height */
+        .static-layout {
+            align-items: stretch;
+        }
+        
+        .output-section {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        
+        .output-section .pie-layout {
+            flex: 1;
+            display: flex;
+            flex-direction: row;
+            gap: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 15px;
+        }
+        
+        .output-section .pie-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .pie-wrapper {
+            flex: 1;
+            min-height: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .pie-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 10px;
+        }
+        
+        .pie-header h3 {
+            margin: 0;
+            font-size: 0.95rem;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Animation -->
+    <div class="page-loader" id="pageLoader">
+        <div class="loader-spinner"></div>
+        <div class="loader-text">Loading</div>
+        <div class="loader-dots"><span></span><span></span><span></span></div>
+    </div>
+
+    <div class="reveal">
+        <div class="slides">
+            <section data-background-gradient="linear-gradient(135deg, #0f3460 0%, #1a1a2e 100%)">
+                <!-- Page Title -->
+                <div class="page-title">
+                    <h1>🎓 Interactive Visualization</h1>
+                    <div class="subtitle">HKU <span class="highlight-keyword">Student Distribution</span> by Programme Level</div>
+                </div>
+                
+                <div class="static-layout">
+                    <!-- Left: Prompt Section -->
+                    <div class="prompt-section">
+                        <button class="prompt-copy-btn" onclick="copyPrompt()">📋 Copy Prompt</button>
+                        <div class="section-header">
+                            <span class="section-icon">💬</span>
+                            <h3>Prompt</h3>
+                        </div>
+                        <div class="prompt-content scrollable" id="prompt-text">
+                            <p>I want to create an <span class="replaceable" title="Can be: bar chart, pie chart, line chart, etc.">interactive multi-level drill-down pie chart</span> using HTML/JavaScript with Chart.js.</p>
+                            <p class="highlight-text">Please generate a <strong>complete HTML page</strong> with the following features:</p>
+                            <ul style="text-align: left; font-size: 0.85rem; margin: 10px 0; padding-left: 20px;">
+                                <li>3-level hierarchical navigation pie charts</li>
+                                <li>Click segment to drill down to next level</li>
+                                <li>Back button for navigation between levels</li>
+                                <li>Animated panel transitions</li>
+                            </ul>
+                            <p class="highlight-text">Here is the <strong>reference code logic</strong>:</p>
+                            <pre class="data-block code-example"><code class="language-javascript">// Key logic for multi-level pie chart
+const mainChart = new Chart(ctx, {
+    type: 'pie',
+    data: {
+        labels: levels,
+        datasets: [{
+            data: levelTotals,
+            backgroundColor: levelColors
+        }]
+    },
+    options: {
+        onClick: (event, elements) => {
+            if (elements.length > 0) {
+                // Drill down to next level
+                showFacultyDetail(index);
+            }
+        }
+    }
+});
+
+function showFacultyDetail(levelIdx) {
+    // Show second level panel
+    panel.classList.add('visible');
+    // Create detail pie chart
+}</code></pre>
+                            <p class="highlight-text">Use this <strong>data</strong>:</p>
+                            <pre class="data-block"><code>studentData = {
+    "Programme": ["Undergraduate", 
+                  "Taught Postgraduate", 
+                  "Research Postgraduate"],
+    "Architecture": [745, 863, 179],
+    "Arts": [1942, 1474, 188],
+    "Business & Economics": 
+        [3189, 5264, 194],
+    "Engineering": [2620, 2721, 1057],
+    "Medicine": [3534, 1037, 996],
+    // ... 10 faculties total
+}</code></pre>
+                        </div>
+                        <div class="prompt-tag">Interactive Chart Prompt</div>
+                    </div>
+                    
+                    <!-- Right: Output Section -->
+                    <div class="output-section">
+                        <div class="pie-layout">
+                            <!-- Main Pie Chart (Level 1) -->
+                            <div class="pie-container" id="mainPieContainer">
+                                <div class="pie-header">
+                                    <span class="section-icon">📊</span>
+                                    <h3>Overall Student Distribution</h3>
+                                </div>
+                                <div class="pie-wrapper">
+                                    <canvas id="mainPieChart"></canvas>
+                                </div>
+                                <div class="overview-legend" id="overviewLegend"></div>
+                                <div class="chart-hint">Click on a segment to view faculty breakdown</div>
+                            </div>
+                            
+                            <!-- Detail Panel (Level 2 - Faculty Breakdown) -->
+                            <div class="detail-pie-panel" id="detailPanel">
+                                <div class="detail-header" id="detailHeader">
+                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                        <button class="back-btn" onclick="goBackToMain()">← Back</button>
+                                        <h3 style="margin: 0;"><span id="detailIcon">📋</span> <span id="detailTitle">Faculty Breakdown</span></h3>
+                                    </div>
+                                    <button class="close-btn" onclick="closeAllPanels()">×</button>
+                                </div>
+                                <div class="detail-pie-content">
+                                    <div style="text-align: center;">
+                                        <span class="level-badge" id="levelBadge">Level</span>
+                                    </div>
+                                    <div class="detail-pie-wrapper">
+                                        <canvas id="detailPieChart"></canvas>
+                                    </div>
+                                    <div class="faculty-legend" id="facultyLegend"></div>
+                                    <div class="chart-hint" style="font-size: 0.7rem;">Click on a faculty to see level distribution</div>
+                                </div>
+                            </div>
+                            
+                            <!-- Third Level Panel (Faculty's Level Distribution) -->
+                            <div class="third-level-panel" id="thirdPanel">
+                                <div class="detail-header">
+                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                        <button class="back-btn" onclick="goBackToFaculty()">← Back</button>
+                                        <h3 style="margin: 0;"><span id="thirdIcon">🏛️</span> <span id="thirdTitle">Faculty Detail</span></h3>
+                                    </div>
+                                    <button class="close-btn" onclick="closeThirdPanel()">×</button>
+                                </div>
+                                <div class="detail-pie-content">
+                                    <div style="text-align: center;">
+                                        <span class="faculty-badge" id="facultyBadge">Faculty</span>
+                                    </div>
+                                    <div class="detail-pie-wrapper">
+                                        <canvas id="thirdPieChart"></canvas>
+                                    </div>
+                                    <div class="level-legend" id="levelLegend"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Navigation -->
+                <div class="nav-buttons">
+                    <button class="nav-btn prev-btn" onclick="navigateTo('interactive2_rank.html')">← Previous</button>
+                    <span class="page-indicator">3 / 3</span>
+                    <button class="nav-btn next-btn" onclick="navigateTo('../index.html')">Home →</button>
+                </div>
+            </section>
+        </div>
+    </div>
+    
+    <!-- Reveal.js -->
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.js"></script>
+    <!-- Highlight.js -->
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.8.0/lib/highlight.min.js"></script>
+    
+    <script>
+        // Student Data
+        const studentData = {
+            "Programme": ["Undergraduate", "Taught Postgraduate", "Research Postgraduate", "All Levels"],
+            "Architecture": [745, 863, 179, 1787],
+            "Arts": [1942, 1474, 188, 3604],
+            "Business and Economics": [3189, 5264, 194, 8647],
+            "Dentistry": [486, 92, 157, 735],
+            "Education": [909, 1453, 237, 2599],
+            "Engineering": [2620, 2721, 1057, 6398],
+            "Law": [581, 1215, 95, 1891],
+            "Medicine": [3534, 1037, 996, 5567],
+            "Science": [2764, 840, 721, 4325],
+            "Social Sciences": [1721, 1582, 269, 3572]
+        };
+        
+        const faculties = Object.keys(studentData).filter(k => k !== 'Programme');
+        const levels = studentData.Programme.slice(0, 3);
+        
+        // Color schemes
+        const levelColors = ['#00d4ff', '#f472b6', '#a78bfa'];
+        const levelBgColors = ['rgba(0, 212, 255, 0.8)', 'rgba(244, 114, 182, 0.8)', 'rgba(167, 139, 250, 0.8)'];
+        
+        const facultyColors = [
+            '#00d4ff', '#f472b6', '#a78bfa', '#34d399', '#fbbf24',
+            '#f87171', '#60a5fa', '#c084fc', '#fb923c', '#4ade80'
+        ];
+        
+        let mainChart = null;
+        let detailChart = null;
+        let thirdChart = null;
+        let currentLevel = null;
+        let currentFaculty = null;
+        let isAnimating = false;
+        let viewState = 'main';
+        
+        function initMainChart() {
+            const ctx = document.getElementById('mainPieChart').getContext('2d');
+            const levelTotals = levels.map((_, i) => 
+                faculties.reduce((sum, f) => sum + studentData[f][i], 0)
+            );
+            
+            mainChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: levels,
+                    datasets: [{
+                        data: levelTotals,
+                        backgroundColor: levelBgColors,
+                        borderColor: levelColors,
+                        borderWidth: 2,
+                        hoverBorderWidth: 3,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 52, 96, 0.95)',
+                            titleColor: '#fff',
+                            bodyColor: 'rgba(255, 255, 255, 0.8)',
+                            borderColor: 'rgba(255, 255, 255, 0.2)',
+                            borderWidth: 1,
+                            padding: 10,
+                            callbacks: {
+                                label: (ctx) => {
+                                    const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                                    const pct = ((ctx.raw / total) * 100).toFixed(1);
+                                    return `${ctx.label}: ${ctx.raw.toLocaleString()} (${pct}%)`;
+                                },
+                                afterLabel: () => '\n👆 Click for faculty breakdown'
+                            }
+                        }
+                    },
+                    onClick: (event, elements) => {
+                        if (elements.length > 0 && !isAnimating) {
+                            handleLevelClick(elements[0].index);
+                        }
+                    },
+                    onHover: (event, elements) => {
+                        event.native.target.style.cursor = elements.length > 0 ? 'pointer' : 'default';
+                        updateLegendHighlight(elements.length > 0 ? elements[0].index : -1);
+                    }
+                }
+            });
+            createOverviewLegend(levelTotals);
+        }
+        
+        function createOverviewLegend(totals) {
+            const container = document.getElementById('overviewLegend');
+            const total = totals.reduce((a, b) => a + b, 0);
+            container.innerHTML = levels.map((level, i) => {
+                const pct = ((totals[i] / total) * 100).toFixed(1);
+                return `
+                    <div class="overview-legend-item" data-index="${i}" onclick="handleLevelClick(${i})">
+                        <span class="legend-color" style="background: ${levelColors[i]}"></span>
+                        <span class="legend-text">${level}</span>
+                        <span class="legend-text" style="opacity: 0.6">(${pct}%)</span>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function updateLegendHighlight(index) {
+            document.querySelectorAll('.overview-legend-item').forEach((item, i) => {
+                const colorDot = item.querySelector('.legend-color');
+                if (i === index) {
+                    item.classList.add('active');
+                    colorDot.classList.add('glow');
+                } else {
+                    item.classList.remove('active');
+                    colorDot.classList.remove('glow');
+                }
+            });
+        }
+        
+        function handleLevelClick(levelIndex) {
+            if (isAnimating) return;
+            const panel = document.getElementById('detailPanel');
+            const isNewLevel = currentLevel !== levelIndex;
+            
+            if (viewState === 'level') {
+                isAnimating = true;
+                goBackToFacultyThenSwitch(levelIndex);
+                return;
+            }
+            
+            if (panel.classList.contains('visible') && isNewLevel) {
+                isAnimating = true;
+                panel.classList.add('closing');
+                setTimeout(() => {
+                    panel.classList.remove('closing');
+                    showFacultyDetail(levelIndex);
+                    isAnimating = false;
+                }, 250);
+            } else if (!panel.classList.contains('visible')) {
+                document.getElementById('mainPieContainer').classList.add('shifted');
+                showFacultyDetail(levelIndex);
+                viewState = 'faculty';
+                setTimeout(() => mainChart.resize(), 500);
+            }
+        }
+        
+        function showFacultyDetail(levelIndex) {
+            currentLevel = levelIndex;
+            const level = levels[levelIndex];
+            const panel = document.getElementById('detailPanel');
+            
+            const badge = document.getElementById('levelBadge');
+            badge.textContent = `🎓 ${level}`;
+            badge.className = 'level-badge ' + ['undergraduate', 'taught', 'research'][levelIndex];
+            
+            document.getElementById('detailIcon').textContent = ['📚', '📖', '🔬'][levelIndex];
+            document.getElementById('detailTitle').textContent = `${level} - Faculty Breakdown`;
+            
+            const facultyData = faculties.map(f => studentData[f][levelIndex]);
+            const total = facultyData.reduce((a, b) => a + b, 0);
+            
+            if (detailChart) detailChart.destroy();
+            
+            const ctx = document.getElementById('detailPieChart').getContext('2d');
+            detailChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: faculties,
+                    datasets: [{
+                        data: facultyData,
+                        backgroundColor: facultyColors.map(c => c + 'cc'),
+                        borderColor: facultyColors,
+                        borderWidth: 2,
+                        hoverBorderWidth: 3,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 52, 96, 0.95)',
+                            titleColor: '#fff',
+                            bodyColor: 'rgba(255, 255, 255, 0.8)',
+                            borderColor: 'rgba(255, 255, 255, 0.2)',
+                            borderWidth: 1,
+                            padding: 10,
+                            callbacks: {
+                                label: (ctx) => {
+                                    const pct = ((ctx.raw / total) * 100).toFixed(1);
+                                    return `Students: ${ctx.raw.toLocaleString()} (${pct}%)`;
+                                },
+                                afterLabel: () => '\n👆 Click to see level breakdown'
+                            }
+                        }
+                    },
+                    onClick: (event, elements) => {
+                        if (elements.length > 0 && !isAnimating) {
+                            handleFacultyClick(elements[0].index);
+                        }
+                    },
+                    onHover: (event, elements) => {
+                        event.native.target.style.cursor = elements.length > 0 ? 'pointer' : 'default';
+                        highlightFacultyLegend(elements.length > 0 ? elements[0].index : -1);
+                    }
+                }
+            });
+            
+            createFacultyLegend(facultyData, total);
+            panel.classList.add('visible');
+            viewState = 'faculty';
+        }
+        
+        function createFacultyLegend(data, total) {
+            const container = document.getElementById('facultyLegend');
+            container.innerHTML = faculties.map((faculty, i) => {
+                const pct = ((data[i] / total) * 100).toFixed(1);
+                return `
+                    <div class="faculty-legend-item" data-index="${i}" onclick="handleFacultyClick(${i})">
+                        <span class="legend-color" style="background: ${facultyColors[i]}"></span>
+                        <span class="legend-text">${faculty}</span>
+                        <span class="legend-value">${data[i].toLocaleString()} (${pct}%)</span>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function highlightFacultyLegend(index) {
+            document.querySelectorAll('.faculty-legend-item').forEach((item, i) => {
+                const colorDot = item.querySelector('.legend-color');
+                if (i === index) {
+                    item.classList.add('highlight');
+                    colorDot.style.boxShadow = `0 0 12px ${facultyColors[i]}`;
+                } else {
+                    item.classList.remove('highlight');
+                    colorDot.style.boxShadow = 'none';
+                }
+            });
+        }
+        
+        function handleFacultyClick(facultyIndex) {
+            if (isAnimating) return;
+            const thirdPanel = document.getElementById('thirdPanel');
+            const isNewFaculty = currentFaculty !== facultyIndex;
+            
+            if (thirdPanel.classList.contains('visible') && isNewFaculty) {
+                isAnimating = true;
+                thirdPanel.classList.add('closing');
+                setTimeout(() => {
+                    thirdPanel.classList.remove('closing');
+                    showLevelDetail(facultyIndex);
+                    isAnimating = false;
+                }, 250);
+            } else if (!thirdPanel.classList.contains('visible')) {
+                document.getElementById('mainPieContainer').classList.add('hidden');
+                document.getElementById('detailPanel').classList.add('shifted');
+                showLevelDetail(facultyIndex);
+                setTimeout(() => detailChart && detailChart.resize(), 500);
+            }
+        }
+        
+        function showLevelDetail(facultyIndex) {
+            currentFaculty = facultyIndex;
+            const faculty = faculties[facultyIndex];
+            const thirdPanel = document.getElementById('thirdPanel');
+            
+            const badge = document.getElementById('facultyBadge');
+            badge.textContent = `🏛️ ${faculty}`;
+            badge.style.background = `linear-gradient(135deg, ${facultyColors[facultyIndex]}, ${facultyColors[facultyIndex]}99)`;
+            
+            document.getElementById('thirdIcon').textContent = '🏛️';
+            document.getElementById('thirdTitle').textContent = `${faculty} - Level Distribution`;
+            
+            const levelData = studentData[faculty].slice(0, 3);
+            const total = levelData.reduce((a, b) => a + b, 0);
+            
+            if (thirdChart) thirdChart.destroy();
+            
+            const ctx = document.getElementById('thirdPieChart').getContext('2d');
+            thirdChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: levels,
+                    datasets: [{
+                        data: levelData,
+                        backgroundColor: levelBgColors,
+                        borderColor: levelColors,
+                        borderWidth: 2,
+                        hoverBorderWidth: 3,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 52, 96, 0.95)',
+                            titleColor: '#fff',
+                            bodyColor: 'rgba(255, 255, 255, 0.8)',
+                            borderColor: 'rgba(255, 255, 255, 0.2)',
+                            borderWidth: 1,
+                            padding: 10,
+                            callbacks: {
+                                label: (ctx) => {
+                                    const pct = ((ctx.raw / total) * 100).toFixed(1);
+                                    return `${ctx.label}: ${ctx.raw.toLocaleString()} (${pct}%)`;
+                                }
+                            }
+                        }
+                    },
+                    onHover: (event, elements) => {
+                        highlightLevelLegend(elements.length > 0 ? elements[0].index : -1);
+                    }
+                }
+            });
+            
+            createLevelLegend(levelData, total);
+            thirdPanel.classList.add('visible');
+            viewState = 'level';
+        }
+        
+        function createLevelLegend(data, total) {
+            const container = document.getElementById('levelLegend');
+            container.innerHTML = levels.map((level, i) => {
+                const pct = ((data[i] / total) * 100).toFixed(1);
+                return `
+                    <div class="level-legend-item" data-index="${i}">
+                        <span class="legend-color" style="background: ${levelColors[i]}"></span>
+                        <span class="legend-text">${level}</span>
+                        <span class="legend-value">${data[i].toLocaleString()} (${pct}%)</span>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function highlightLevelLegend(index) {
+            document.querySelectorAll('.level-legend-item').forEach((item, i) => {
+                const colorDot = item.querySelector('.legend-color');
+                if (i === index) {
+                    item.classList.add('highlight');
+                    colorDot.style.boxShadow = `0 0 12px ${levelColors[i]}`;
+                } else {
+                    item.classList.remove('highlight');
+                    colorDot.style.boxShadow = 'none';
+                }
+            });
+        }
+        
+        function goBackToMain() {
+            currentLevel = null;
+            document.getElementById('mainPieContainer').classList.remove('shifted');
+            document.getElementById('detailPanel').classList.remove('visible');
+            viewState = 'main';
+            setTimeout(() => mainChart.resize(), 500);
+        }
+        
+        function goBackToFaculty() {
+            currentFaculty = null;
+            document.getElementById('mainPieContainer').classList.remove('hidden');
+            document.getElementById('mainPieContainer').classList.add('shifted');
+            document.getElementById('detailPanel').classList.remove('shifted');
+            document.getElementById('thirdPanel').classList.remove('visible');
+            viewState = 'faculty';
+            setTimeout(() => {
+                mainChart.resize();
+                detailChart && detailChart.resize();
+            }, 500);
+        }
+        
+        function goBackToFacultyThenSwitch(newLevelIndex) {
+            document.getElementById('thirdPanel').classList.add('closing');
+            setTimeout(() => {
+                document.getElementById('thirdPanel').classList.remove('visible', 'closing');
+                document.getElementById('mainPieContainer').classList.remove('hidden');
+                document.getElementById('mainPieContainer').classList.add('shifted');
+                document.getElementById('detailPanel').classList.remove('shifted');
+                
+                setTimeout(() => {
+                    mainChart.resize();
+                    showFacultyDetail(newLevelIndex);
+                    isAnimating = false;
+                }, 300);
+            }, 250);
+        }
+        
+        function closeThirdPanel() {
+            goBackToFaculty();
+        }
+        
+        function closeAllPanels() {
+            if (viewState === 'level') {
+                document.getElementById('thirdPanel').classList.remove('visible');
+                document.getElementById('detailPanel').classList.remove('shifted');
+            }
+            document.getElementById('mainPieContainer').classList.remove('shifted', 'hidden');
+            document.getElementById('detailPanel').classList.remove('visible', 'shifted');
+            currentLevel = null;
+            currentFaculty = null;
+            viewState = 'main';
+            setTimeout(() => mainChart.resize(), 500);
+        }
+        
+        // Copy prompt to clipboard
+        function copyPrompt() {
+            const promptElement = document.getElementById('prompt-text');
+            const text = promptElement.innerText.replace(/🔄/g, '').replace(/💡.*$/gm, '').trim();
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.querySelector('.prompt-copy-btn');
+                btn.textContent = '✓ Copied!';
+                setTimeout(() => {
+                    btn.textContent = '📋 Copy Prompt';
+                }, 2000);
+            });
+        }
+        
+        window.addEventListener('load', () => setTimeout(() => document.getElementById('pageLoader').classList.add('hidden'), 500));
+        
+        function navigateTo(url) {
+            document.getElementById('pageLoader').classList.remove('hidden');
+            setTimeout(() => window.location.href = url, 300);
+        }
+
+        Reveal.initialize({ hash: false, history: false, center: false, width: '100%', height: '100%', margin: 0, controls: false, progress: false, keyboard: true });
+        Reveal.on('ready', () => initMainChart());
+        
+        // Initialize syntax highlighting
+        hljs.highlightAll();
+    </script>
+</body>
+</html>

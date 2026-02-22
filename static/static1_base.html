@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Static Visualization - Base Prompt</title>
+    
+    <!-- Reveal.js CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/theme/black.css">
+    
+    <!-- Highlight.js for code syntax -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.8.0/styles/atom-one-dark.min.css">
+    
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="../src/style.css">
+</head>
+<body>
+    <!-- Loading Animation -->
+    <div class="page-loader" id="pageLoader">
+        <div class="loader-spinner"></div>
+        <div class="loader-text">Loading</div>
+        <div class="loader-dots">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </div>
+
+    <div class="reveal">
+        <div class="slides">
+<section data-background-gradient="linear-gradient(135deg, #0f3460 0%, #1a1a2e 100%)">
+<!-- Page Title -->
+                <div class="page-title">
+                    <h1>📊 Static Visualization</h1>
+                    <div class="subtitle">Directly Generate Code with <span class="highlight-keyword">Basic Prompt</span></div>
+                </div>
+                
+                <div class="static-layout">
+                    <!-- Left: Prompt Section -->
+                    <div class="prompt-section">
+                        <button class="prompt-copy-btn" onclick="copyPrompt()">📋 Copy Prompt</button>
+                        <div class="section-header">
+                            <span class="section-icon">💬</span>
+                            <h3>Prompt</h3>
+                        </div>
+                        <div class="prompt-content" id="prompt-text">
+                            <p>I want to draw a <span class="replaceable" title="Can be replaced with: barplot, scatterplot, heatmap, etc.">lineplot</span>; please generate directly executable Python code for data visualization using the following data:</p>
+                            <pre class="data-block"><code>hku_rank_data = {
+    "Year": [2021, 2022, 2023, 2024, 2025],
+    "QS"  : [22,   22,   21,   26,  17],
+    "THE" : [39,   30,   31,   35,  35],
+}</code></pre>
+                        </div>
+                        <div class="prompt-tag">Example 1: Basic Prompt</div>
+                    </div>
+                    
+                    <!-- Right: Output Section -->
+                    <div class="output-section">
+                        <!-- Code Block (Collapsible) -->
+                        <div class="code-block">
+                            <div class="code-header" onclick="toggleCode(this)">
+                                <span class="section-icon">📄</span>
+                                <h4>Generated Code</h4>
+                                <span class="toggle-icon">▼</span>
+                                <button class="copy-btn" onclick="copyCode(event, 'code1')">📋 Copy</button>
+                            </div>
+                            <div class="code-content collapsed" id="code1">
+                                <pre><code class="language-python">import matplotlib.pyplot as plt
+import pandas as pd
+
+# Data
+hku_rank_data = {
+    "Year": [2021, 2022, 2023, 2024, 2025],
+    "QS": [22, 22, 21, 26, 17],
+    "THE": [39, 30, 31, 35, 35],
+}
+
+# Convert to DataFrame
+df = pd.DataFrame(hku_rank_data)
+
+# Plot
+plt.figure(figsize=(10, 6))
+plt.plot(df['Year'], df['QS'], marker='o', label='QS')
+plt.plot(df['Year'], df['THE'], marker='s', label='THE')
+
+# Labels and title
+plt.xlabel('Year')
+plt.ylabel('Ranking')
+plt.title('HKU Rankings Over Years')
+plt.gca().invert_yaxis()  # Rankings are better when lower
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+
+# Show plot
+plt.savefig('base_prompt.png')</code></pre>
+                            </div>
+                        </div>
+                        
+                        <!-- Image Block -->
+                        <div class="image-block">
+                            <div class="image-header">
+                                <span class="section-icon">🖼️</span>
+                                <h4>Generated Visualization</h4>
+                            </div>
+                            <div class="image-content">
+                                <img src="../src/images/base_prompt.png" alt="Base Prompt Visualization">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+<!-- Navigation -->
+                <div class="nav-buttons">
+                    <button class="nav-btn prev-btn" onclick="navigateTo('../index.html#static')">← Back</button>
+                    <span class="page-indicator">1 / 3</span>
+                    <button class="nav-btn next-btn" onclick="navigateTo('static2_image.html')">Next →</button>
+                </div>
+            </section>
+        </div>
+    </div>
+    
+    <!-- Reveal.js -->
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.js"></script>
+    <!-- Highlight.js -->
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.8.0/lib/highlight.min.js"></script>
+    
+    <script>
+        // Hide loader when page is fully loaded
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                document.getElementById('pageLoader').classList.add('hidden');
+            }, 500);
+        });
+
+        // Show loader on navigation
+        function navigateTo(url) {
+            document.getElementById('pageLoader').classList.remove('hidden');
+            setTimeout(function() {
+                window.location.href = url;
+            }, 300);
+        }
+
+        // Initialize Reveal.js
+        Reveal.initialize({
+            hash: false,
+            history: false,
+            center: false,
+            width: '100%',
+            height: '100%',
+            margin: 0,
+            controls: false,
+            progress: false,
+            keyboard: true
+        });
+        
+        // Initialize syntax highlighting
+        hljs.highlightAll();
+        
+        // Toggle code visibility
+        function toggleCode(header) {
+            const content = header.nextElementSibling;
+            const icon = header.querySelector('.toggle-icon');
+            content.classList.toggle('collapsed');
+            icon.textContent = content.classList.contains('collapsed') ? '▼' : '▲';
+        }
+        
+        // Copy code to clipboard
+        function copyCode(event, codeId) {
+            event.stopPropagation();
+            const codeElement = document.querySelector('#' + codeId + ' code');
+            const text = codeElement.textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = event.target;
+                btn.textContent = '✓ Copied!';
+                setTimeout(() => {
+                    btn.textContent = '📋 Copy';
+                }, 2000);
+            });
+        }
+        
+        // Copy prompt to clipboard
+        function copyPrompt() {
+            const promptElement = document.getElementById('prompt-text');
+            // Get text content, preserving line breaks
+            const text = promptElement.innerText.replace(/🔄/g, '').replace(/💡.*$/gm, '').trim();
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.querySelector('.prompt-copy-btn');
+                btn.textContent = '✓ Copied!';
+                setTimeout(() => {
+                    btn.textContent = '📋 Copy Prompt';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
